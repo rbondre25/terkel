@@ -1,4 +1,4 @@
-package team25core;
+package test;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -13,9 +13,14 @@ import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.firstinspires.ftc.robotcore.external.tfod.TfodRoverRuckus.TFOD_MODEL_ASSET;
+import team25core.Robot;
+import team25core.RobotEvent;
+import team25core.RobotTask;
+import team25core.VuforiaConstants;
 
-public class MineralDetectionTask extends RobotTask {
+import static org.firstinspires.ftc.robotcore.external.tfod.TfodSkyStone.TFOD_MODEL_ASSET;
+
+public class StoneDetectionTaskMargarita extends RobotTask {
 
     public enum EventKind {
         OBJECTS_DETECTED,
@@ -23,17 +28,18 @@ public class MineralDetectionTask extends RobotTask {
 
     protected ElapsedTime timer;
 
-    public class MineralDetectionEvent extends RobotEvent {
+    public class StoneDetectionEvent extends RobotEvent {
 
         public EventKind kind;
-        public List<Recognition> minerals;
+        public List<Recognition> stones;
 
-        public MineralDetectionEvent(RobotTask task, EventKind kind, List<Recognition> m)
+        //this is constructor for stone detection event
+        public StoneDetectionEvent(RobotTask task, EventKind kind, List<Recognition> m)
         {
             super(task);
             this.kind = kind;
-            this.minerals = new ArrayList<>(m.size());
-            this.minerals.addAll(m);
+            this.stones = new ArrayList<>(m.size());
+            this.stones.addAll(m);
         }
 
         public String toString()
@@ -45,34 +51,37 @@ public class MineralDetectionTask extends RobotTask {
     private VuforiaLocalizer vuforia;
     private Telemetry telemetry;
     private TFObjectDetector tfod;
-    public static final String LABEL_GOLD_MINERAL = "Gold Mineral";
-    private static final String LABEL_SILVER_MINERAL = "Silver Mineral";
+
+    public static final String LABEL_STONE = "Stone";
+    private static final String LABEL_SKY_STONE = "SkyStone";
     private int rateLimitMs;
     private DetectionKind detectionKind;
     private String cameraName;
 
     public enum DetectionKind {
         EVERYTHING,
-        GOLD,
-        SILVER,
-        LARGEST_GOLD,
-    };
+        STONE_DETECTED,
+        SKY_STONE_DETECTED,
+        LARGEST_STONE_DETECTED,
+        UNKNOWN_DETECTED,
+    }
+     public enum StoneKind {
+            SKY_STONE_KIND,
+            STONE_KIND,
+            UNKNOWN_KIND,
+     };
 
-    public enum MineralKind {
-        GOLD_MINERAL,
-        SILVER_MINERAL,
-        UNKNOWN_MINERAL,
-    };
 
-    public MineralDetectionTask(Robot robot)
+    //for phone camera constructor
+    public StoneDetectionTaskMargarita(Robot robot)
     {
         super(robot);
 
         rateLimitMs = 0;
         detectionKind = DetectionKind.EVERYTHING;
     }
-
-    public MineralDetectionTask(Robot robot, String cameraName)
+    //for webcamera construtor
+    public StoneDetectionTaskMargarita(Robot robot, String cameraName)
     {
         super(robot);
         rateLimitMs = 0;
@@ -84,14 +93,15 @@ public class MineralDetectionTask extends RobotTask {
         /*
          * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
          */
+        //new=your own copy of vuforia parameters
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
         parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
-
+        //if webcam
         if (cameraName != null) {
             parameters.vuforiaLicenseKey = VuforiaConstants.WEBCAM_VUFORIA_KEY;
             parameters.cameraName = hardwareMap.get(WebcamName.class, cameraName);
 
-        } else {
+        } else {   // if phonecam
             parameters.vuforiaLicenseKey = VuforiaConstants.VUFORIA_KEY;
         }
 
@@ -106,8 +116,9 @@ public class MineralDetectionTask extends RobotTask {
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
                 "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+        //concept tensor flow object detection had minimum confidence
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_STONE, LABEL_SKY_STONE);
     }
 
     public void init(Telemetry telemetry, HardwareMap hardwareMap)
@@ -130,7 +141,7 @@ public class MineralDetectionTask extends RobotTask {
     {
         this.detectionKind = detectionKind;
     }
-
+    //this will start tfod activation and start detecting
     @Override
     public void start()
     {
@@ -148,54 +159,54 @@ public class MineralDetectionTask extends RobotTask {
         robot.removeTask(this);
     }
 
-    public static MineralKind isMineral(Recognition object)
+    public static StoneKind isStone(Recognition object)
     {
-        if (object.getLabel().equals(LABEL_GOLD_MINERAL)) {
-            return MineralKind.GOLD_MINERAL;
-        } else if (object.getLabel().equals(LABEL_SILVER_MINERAL)) {
-            return MineralKind.SILVER_MINERAL;
+        if (object.getLabel().equals(LABEL_STONE)) {
+            return StoneKind.STONE_KIND;
+        } else if (object.getLabel().equals(LABEL_SKY_STONE)) {
+            return StoneKind.SKY_STONE_KIND;
         } else {
-            return MineralKind.UNKNOWN_MINERAL;
+            return StoneKind.UNKNOWN_KIND;
         }
     }
-
-      protected void processEverything(List<Recognition> objects)
+    //if recognize anything will add to que
+    protected void processEverything(List<Recognition> objects)
     {
         if (objects.size() > 0) {
-            robot.queueEvent(new MineralDetectionEvent(this, EventKind.OBJECTS_DETECTED, objects));
+            robot.queueEvent(new StoneDetectionEvent(this, EventKind.OBJECTS_DETECTED, objects));
         }
     }
-
-    protected void processGold(List<Recognition> objects)
+    //only adds stones which will make event and add to que
+    protected void processStone(List<Recognition> objects)
     {
-        List<Recognition> gold = new ArrayList<>();
+        List<Recognition> stones = new ArrayList<>();
         for (Recognition object : objects) {
-            if (isMineral(object) == MineralKind.GOLD_MINERAL) {
-                gold.add(object);
+            if (isStone(object) == StoneKind.STONE_KIND) {
+                stones.add(object);
             }
         }
 
-        if (!gold.isEmpty()) {
-            robot.queueEvent(new MineralDetectionEvent(this, EventKind.OBJECTS_DETECTED, gold));
+        if (!stones.isEmpty()) {
+            robot.queueEvent(new StoneDetectionEvent(this, EventKind.OBJECTS_DETECTED, stones));
         }
     }
 
-    protected void processSilver(List<Recognition> objects)
+    protected void processSkyStone(List<Recognition> objects)
     {
-        List<Recognition> silver = new ArrayList<>();
+        List<Recognition> skystones = new ArrayList<>();
         for (Recognition object : objects) {
-            if (isMineral(object) == MineralKind.SILVER_MINERAL) {
-                silver.add(object);
+            if (isStone(object) == StoneKind.SKY_STONE_KIND) {
+                skystones.add(object);
             }
         }
 
-        if (!silver.isEmpty()) {
-            robot.queueEvent(new MineralDetectionEvent(this, EventKind.OBJECTS_DETECTED, silver));
+        if (!skystones.isEmpty()) {
+            robot.queueEvent(new StoneDetectionEvent(this, EventKind.OBJECTS_DETECTED, skystones));
         }
 
     }
 
-    protected void processLargestGold(List<Recognition> objects)
+    protected void processLargestSkyStone(List<Recognition> objects)
     {
         if (objects.isEmpty()) {
             return;
@@ -205,7 +216,7 @@ public class MineralDetectionTask extends RobotTask {
         List<Recognition> singleton;
 
         for (Recognition object : objects) {
-            if (isMineral(object) == MineralKind.GOLD_MINERAL) {
+            if (isStone(object) == StoneKind.SKY_STONE_KIND) {
                 if (largest == null) {
                     largest = object;
                 } else if ((largest.getHeight() * largest.getWidth()) < (object.getWidth() * object.getHeight())) {
@@ -217,10 +228,11 @@ public class MineralDetectionTask extends RobotTask {
         if (largest != null) {
             singleton = new ArrayList<>();
             singleton.add(largest);
-            robot.queueEvent(new MineralDetectionEvent(this, EventKind.OBJECTS_DETECTED, singleton));
+            robot.queueEvent(new StoneDetectionEvent(this, EventKind.OBJECTS_DETECTED, singleton));
         }
     }
 
+    //timeslice calls to get information from recognition
     protected void processDetectedObjects(List<Recognition> objects)
     {
         if (objects == null || objects.isEmpty()) {
@@ -231,27 +243,29 @@ public class MineralDetectionTask extends RobotTask {
             case EVERYTHING:
                 processEverything(objects);
                 break;
-            case GOLD:
-                processGold(objects);
+            case SKY_STONE_DETECTED:
+                processStone(objects);
                 break;
-            case SILVER:
-                processSilver(objects);
+            case STONE_DETECTED:
+                processSkyStone(objects);
                 break;
-            case LARGEST_GOLD:
-                processLargestGold(objects);
+            case LARGEST_STONE_DETECTED:
+                processLargestSkyStone(objects);
                 break;
         }
     }
 
     @Override
     public boolean timeslice()
+
     {
+     //timeslice set to 0 do when it gets called
         if (rateLimitMs != 0) {
             if (timer.time() < rateLimitMs) {
                 return false;
             }
         }
-
+        //shows location of stone
         processDetectedObjects(tfod.getUpdatedRecognitions());
 
         if (rateLimitMs != 0) {

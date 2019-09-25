@@ -175,13 +175,13 @@ public class TwoWheelDirectDrivetrain extends DrivetrainBaseImpl implements Driv
     @Override
     public void setPowerLeft(double speed)
     {
-
+        frontLeft.setPower(speed);
     }
 
     @Override
     public void setPowerRight(double speed)
     {
-
+        frontRight.setPower(speed);
     }
 
     @Override

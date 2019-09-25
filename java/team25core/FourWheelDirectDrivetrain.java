@@ -47,7 +47,7 @@ public class FourWheelDirectDrivetrain extends DrivetrainBaseImpl implements Dri
     double multiplier;
     boolean doStrafeReverse = false;
 
-    public FourWheelDirectDrivetrain(DcMotor frontRight, DcMotor rearRight, DcMotor frontLeft, DcMotor rearLeft)
+    public  FourWheelDirectDrivetrain(DcMotor frontRight, DcMotor rearRight, DcMotor frontLeft, DcMotor rearLeft)
     {
         super();
 
