@@ -1,4 +1,4 @@
-package team25core;
+package test;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -12,6 +12,11 @@ import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import team25core.Robot;
+import team25core.RobotEvent;
+import team25core.RobotTask;
+import team25core.VuforiaConstants;
 
 import static org.firstinspires.ftc.robotcore.external.tfod.TfodRoverRuckus.TFOD_MODEL_ASSET;
 

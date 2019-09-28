@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) September 2017 FTC Teams 25/5218
  *
@@ -32,80 +31,51 @@
  *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package team25core;
+package test;
 
+
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Gamepad;
 
-public class TankDriveTask extends RobotTask {
+import team25core.FourWheelDirectDrivetrain;
+import team25core.Robot;
+import team25core.RobotEvent;
+import team25core.TankDriveTask;
 
-    protected Robot robot;
-    protected Drivetrain drivetrain;
+@TeleOp(name = "FourWheelDriveBerry")
+//@Disabled
+public class FourWheelDriveTaskSmoothie extends Robot {
 
-    public double right;
-    public double left;
-    public double slowMultiplier = 1;
-    protected SensorCriteria criteria;
+    private DcMotor frontLeft;
+    private DcMotor frontRight;
+    private DcMotor backLeft;
+    private DcMotor backRight;
 
-    public TankDriveTask(Robot robot, Drivetrain drivetrain) //constructor has the same name as class
+    private FourWheelDirectDrivetrain drivetrain;
+
+    private static final int TICKS_PER_INCH = 79;
+
+    @Override
+    public void handleEvent(RobotEvent e)
     {
-        super(robot);
-
-        this.robot = robot;
-        this.drivetrain = drivetrain;
+       // Nothing to do here...
     }
-    public TankDriveTask(Robot robot, Drivetrain drivetrain, SensorCriteria criteria)
+
+    @Override
+    public void init()
     {
-        super(robot);
+        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
+        frontRight = hardwareMap.get(DcMotor.class, "frontRight");
+        backLeft = hardwareMap.get(DcMotor.class, "backLeft");
+        backRight = hardwareMap.get(DcMotor.class, "backRight");
 
-        this.robot = robot;
-        this.drivetrain = drivetrain;
-        this.criteria = criteria;
+        drivetrain = new FourWheelDirectDrivetrain(frontRight, backRight, frontLeft, backLeft);
     }
-
-    private void getJoystick()
-    {
-        Gamepad gamepad = robot.gamepad1;
-
-        left  = gamepad.left_stick_y * slowMultiplier;
-        right = gamepad.right_stick_y * slowMultiplier;
-    }
-
-    public void slowDown(boolean slow) {
-        if (slow) {
-            slowMultiplier = 0.5;
-        } else {
-            slowMultiplier = 1;
-        }
-    }
-
-    public void slowDown(double mult) {
-        slowMultiplier = mult;
-    }
-
 
     @Override
     public void start()
     {
-        // Nothing.
+        this.addTask(new TankDriveTask(this, drivetrain));
     }
-
-    @Override
-    public void stop()
-    {
-        robot.removeTask(this);
-    }
-
-    @Override
-    public boolean timeslice()
-    {
-        getJoystick();
-
-        drivetrain.setPowerLeft(left);
-        drivetrain.setPowerRight(right);
-        return false;
-    }
-
-
 
 }
