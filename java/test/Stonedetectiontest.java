@@ -7,12 +7,12 @@ import team25core.MineralDetectionTask;
 import team25core.Robot;
 import team25core.RobotEvent;
 
-@Autonomous(name = "Mineral Detection Test", group = "Team 25")
+@Autonomous(name = "Stones Detection Test", group = "Team 25")
 public class Stonedetectiontest extends Robot {
 
-    private final static String TAG = "MineralDetectionTest";
+    private final static String TAG = "StoneDetectionTest";
 
-    MineralDetectionTask mdTask;
+    StoneDetectionTaskMargarita mdTask;
 
     @Override
     public void handleEvent(RobotEvent e)
@@ -22,16 +22,16 @@ public class Stonedetectiontest extends Robot {
     @Override
         public void init()
         {
-            mdTask = new MineralDetectionTask(this) {
+            mdTask = new StoneDetectionTaskMargarita(this) {
                 @Override
                 public void handleEvent(RobotEvent e) {
-                    MineralDetectionEvent event = (MineralDetectionEvent)e;
-                    RobotLog.ii(TAG, "Saw: " + event.kind + " Confidence: " + event.minerals.get(0).getConfidence());
+                    StoneDetectionEvent event = (StoneDetectionEvent)e;
+                    RobotLog.ii(TAG, "Saw: " + event.kind + " Confidence: " + event.stones.get(0).getConfidence());
                 }
             };
 
             mdTask.init(telemetry, hardwareMap);
-            mdTask.setDetectionKind(MineralDetectionTask.DetectionKind.EVERYTHING);
+            mdTask.setDetectionKind(StoneDetectionTaskMargarita.DetectionKind.EVERYTHING);
 
         }
     @Override
